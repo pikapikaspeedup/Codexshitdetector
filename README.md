@@ -2,7 +2,7 @@
 
 Detect whether Codex was silently downgraded, degrading code quality and wasting your time on avoidable fixes.
 
-The picker can still say GPT-6 or GPT-6.1. Astra, Sol, 6.1 Sol, Luna, and the rest of that family all show up under the slug you selected. This tool does not trust the label. It reads the first packet of each turn. A downgraded opening is the turn that goes on to write the bugs you then spend the day cleaning up.
+This detector only scores two slugs: `gpt-6-astra` and `gpt-6.1-sol`. Other models are left out. The picker can still show those names while the first packet of the turn is downgraded. A downgraded opening is the turn that goes on to write the bugs you then spend the day cleaning up.
 
 ## What a downgrade looks like
 
@@ -12,19 +12,19 @@ Codex stores each user turn in a local session log. The first model packet is th
 - `reasoning_output_tokens` is greater than 0: the turn opened downgraded.
 - If usage was never flushed, a reasoning item stored before the first reply counts as downgraded.
 
-Later packets in the same turn are ignored. Child turns are ignored. The model column is whatever slug the client recorded, so GPT-6, GPT-6.1, and older 5.6 rows are reported separately when they appear.
+Later packets in the same turn are ignored. Child turns are ignored. Only `gpt-6-astra` and `gpt-6.1-sol` are counted. Pass `--model` to keep just one of them.
 
 A project that had any downgraded turn is listed as a warning. Treat the code written in those turns as likely to contain bugs.
 
 ## Run
 
-Python 3. No extra packages. Dates use your machine's local timezone and include both ends. The default window is the last 7 days, every model.
+Python 3. No extra packages. Dates use your machine's local timezone and include both ends. The default window is the last 7 days, for `gpt-6-astra` and `gpt-6.1-sol` only.
 
 ```bash
 python3 detect.py
 python3 detect.py --model gpt-6-astra
 python3 detect.py --model gpt-6.1-sol
-python3 detect.py --since 2026-09-01 --until 2026-09-07 --model gpt-6-sol
+python3 detect.py --since 2026-09-01 --until 2026-09-07
 ```
 
 Sessions are read from `~/.codex` (`sessions` and `archived_sessions`). Point `CODEX_HOME` somewhere else if your logs live outside the default directory.
@@ -37,7 +37,7 @@ The report is counts: totals, by model, by day, then the project warning. It doe
 
 检测 Codex 是否在静默降智。降智会把代码质量拉低，让你把时间耗在本来可以避开的修复上。
 
-选择器上仍可能写着 GPT-6 或 GPT-6.1。Astra、Sol、6.1 Sol、Luna，以及这一族里的其他名字，日志里都还是你选中的那个 slug。这个工具不看标签。它看每个回合的第一包。降智的开场，就是随后把 Bug 写进项目、再让你花时间去收拾的那些回合。
+只检测两个 slug：`gpt-6-astra` 和 `gpt-6.1-sol`。其他模型先不判。选择器上可以仍显示这两个名字，第一包却已经降智。降智的开场，就是随后把 Bug 写进项目、再让你花时间去收拾的那些回合。
 
 ## 降智长什么样
 
@@ -47,19 +47,19 @@ Codex 把用户回合记在本机会话日志里。只看第一包：
 - `reasoning_output_tokens` 大于 0：这一回合开场降智。
 - 用量没写入时，开口之前已经有推理条目，也算降智。
 
-同一回合后面的包不算。子回合不算。模型列是客户端记下的 slug，所以 GPT-6、GPT-6.1，以及出现过的 5.6，会分开统计。
+同一回合后面的包不算。子回合不算。只统计 `gpt-6-astra` 和 `gpt-6.1-sol`。用 `--model` 可以只留其中一个。
 
 任何一个降智回合所在的项目都会进预警。这些回合里写下的代码，按这个口径视为可能已经带上 Bug。
 
 ## 运行
 
-只需要 Python 3。日期用本机时区，含首尾两天。默认是最近 7 天、全部模型。
+只需要 Python 3。日期用本机时区，含首尾两天。默认是最近 7 天，只检测 `gpt-6-astra` 和 `gpt-6.1-sol`。
 
 ```bash
 python3 detect.py
 python3 detect.py --model gpt-6-astra
 python3 detect.py --model gpt-6.1-sol
-python3 detect.py --since 2026-09-01 --until 2026-09-07 --model gpt-6-sol
+python3 detect.py --since 2026-09-01 --until 2026-09-07
 ```
 
 默认读取 `~/.codex` 下的 `sessions` 和 `archived_sessions`。日志不在默认目录时，设置 `CODEX_HOME`。

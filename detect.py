@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Flag Codex turns whose first response packet includes reasoning.
 
-Defaults to the last 7 local calendar days and every model. Prints a markdown
+Defaults to the last 7 local calendar days for gpt-6-astra and gpt-6.1-sol.
+Prints a markdown
 report. Counts and project directories only. Does not print session ids or
 message text.
 
     python3 detect.py
-    python3 detect.py --since 2026-09-01 --until 2026-09-07 --model gpt-6-astra
-    python3 detect.py --model gpt-6.1-sol
+    python3 detect.py --since 2026-09-01 --until 2026-09-07
+    python3 detect.py --model gpt-6-astra
 """
 
 from __future__ import annotations
@@ -19,6 +20,8 @@ import sys
 from collections import defaultdict
 from datetime import datetime, time, timedelta
 from pathlib import Path
+
+TARGET_MODELS = ("gpt-6-astra", "gpt-6.1-sol")
 
 
 def local_now() -> datetime:
@@ -360,18 +363,33 @@ def render(rows: list[dict], since: str, until: str, models: list[str], files: i
     return "\n".join(lines)
 
 
+def selected_models(parser: argparse.ArgumentParser, requested: list[str]) -> list[str]:
+    models = [item.strip() for item in requested if item.strip()]
+    if not models:
+        return list(TARGET_MODELS)
+    unknown = [model for model in models if model not in TARGET_MODELS]
+    if unknown:
+        parser.error("只检测 gpt-6-astra 和 gpt-6.1-sol")
+    return models
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="最近一周 Codex 第一包降智分布")
     parser.add_argument("--since", help="起始日期 YYYY-MM-DD，本机时区。默认今天往前 6 天")
     parser.add_argument("--until", help="结束日期 YYYY-MM-DD，本机时区。默认今天")
-    parser.add_argument("--model", action="append", default=[], help="模型 slug，可重复。省略为全部")
+    parser.add_argument(
+        "--model",
+        action="append",
+        default=[],
+        help="gpt-6-astra 或 gpt-6.1-sol，可重复。省略为这两个都检测",
+    )
     args = parser.parse_args()
     today = local_now()
     until = parse_day(args.until) if args.until else today
     since = parse_day(args.since) if args.since else until - timedelta(days=6)
     if until.date() < since.date():
         parser.error("--until 早于 --since")
-    models = [item.strip() for item in args.model if item.strip()]
+    models = selected_models(parser, args.model)
     since_s = since.date().isoformat()
     until_s = until.date().isoformat()
     paths = iter_rollouts(since, until)
